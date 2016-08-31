@@ -9,15 +9,21 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // serve static files from public folder
 app.use(express.static(__dirname + '/public'));
 
+var mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost/todo-app-demo');
+
+// Note without requiring your models you can't use them in server.js!
+var Todo = require('./models/todo');
+
 /************
  * DATABASE *
  ************/
 
 // our database is an array for now with some hardcoded values
 var todos = [
-  // { _id: 7, task: 'Laundry', description: 'Wash clothes' },
-  // { _id: 27, task: 'Grocery Shopping', description: 'Buy dinner for this week' },
-  // { _id: 44, task: 'Homework', description: 'Make this app super awesome!' }
+  { _id: 7, task: 'Laundry', description: 'Wash clothes' },
+  { _id: 27, task: 'Grocery Shopping', description: 'Buy dinner for this week' },
+  { _id: 44, task: 'Homework', description: 'Make this app super awesome!' }
 ];
 
 /**********
@@ -47,23 +53,41 @@ app.get('/api/todos/search', function search(req, res) {
   /* This endpoint responds with the search results from the
    * query in the request. COMPLETE THIS ENDPOINT LAST.
    */
+  var searchedTodo = req.params.search;
+  function searchForTodos(){
+    if (searchedTodo == todos[i]){
+      return todos[i];
+    }
+  }
+  res.json(todos[i]);
 });
 
 app.get('/api/todos', function index(req, res) {
-  /* This endpoint responds with all of the todos
-   */
+  //This endpoint responds with all of the todos
+  res.json({todos});
 });
+
 
 app.post('/api/todos', function create(req, res) {
   /* This endpoint will add a todo to our "database"
-   * and respond with the newly created todo.
-   */
+   * and respond with the newly created todo.*/
+   var newTodo;
+   var id = todos[todos.length-1]._id + 1;
+   var task = req.body.task;
+   var desc = req.body.description;
+   newTodo = {_id: id, task: task, description: desc};
+   todos.push(newTodo);
+   res.json(newTodo);
 });
 
 app.get('/api/todos/:id', function show(req, res) {
   /* This endpoint will return a single todo with the
-   * id specified in the route parameter (:id)
-   */
+   * id specified in the route parameter (:id)*/
+   for (var i=0; i<todos.length; i++){
+    if (todos[i]._id == req.params.id){
+      res.json(todos[i]);
+    }
+  }
 });
 
 app.put('/api/todos/:id', function update(req, res) {
@@ -71,6 +95,17 @@ app.put('/api/todos/:id', function update(req, res) {
    * id specified in the route parameter (:id) and respond
    * with the newly updated todo.
    */
+   var id = parseInt(req.params.id);
+   var task = req.body.task;
+   var desc = req.body.description;
+   var updateTodo = {_id: id, task: task, description: desc}; 
+
+    for (var i=0; i<todos.length; i++){
+      if (todos[i]._id === req.params.id){
+      todos.splice(i, 1, i, 1);
+    }
+  }
+    res.json(updateTodo);
 });
 
 app.delete('/api/todos/:id', function destroy(req, res) {
@@ -78,6 +113,12 @@ app.delete('/api/todos/:id', function destroy(req, res) {
    * id specified in the route parameter (:id) and respond
    * with success.
    */
+   for (var i=0; i<todos.length; i++){
+    if (todos[i]._id == req.params.id){
+      res.json(todos[i]);
+      todos.splice(i, 1);
+    }
+  }
 });
 
 /**********
